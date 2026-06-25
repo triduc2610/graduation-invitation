@@ -56,7 +56,7 @@ import { RSVP, Wish } from '../types';
  */
 
 // ĐỊNH NGHĨA LINK GOOGLE APPS SCRIPT WEB APP CỦA BẠN TẠI ĐÂY:
-const RSVP_SHEET_URL = import.meta.env.VITE_RSVP_SHEET_URL || "";
+const RSVP_SHEET_URL = import.meta.env.VITE_RSVP_SHEET_URL || "https://script.google.com/macros/s/AKfycbxnUnLUizQ6YOpP0AjMgnf2e1WK-soYf64PLJh3P--jAciBg0j61uFGPlmgB69tyqm0/exec";
 
 interface RSVPFormProps {
   onRsvpSuccess: () => void;
