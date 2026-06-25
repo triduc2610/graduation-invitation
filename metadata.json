@@ -1,5 +1,5 @@
 {
-  "name": "Graduation Invitation",
+  "name": "NhatLinh Graduation",
   "description": "An elegant, highly interactive online graduation invitation featuring animated floating mortarboards, custom confetti canvas effects, interactive unrolling parchment scrolls, a real-time ceremony countdown, and a community guestbook wishes board.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
