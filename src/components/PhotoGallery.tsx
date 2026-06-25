@@ -105,9 +105,6 @@ export default function PhotoGallery() {
       <div className="text-center mb-8 relative">
         <span className="font-display text-xs tracking-widest text-gold font-bold uppercase">ALBUM KỶ NIỆM TỐT NGHIỆP</span>
         <h3 className="font-display text-2xl font-bold text-white mt-1">Nhìn Lại Hành Trình</h3>
-        <p className="text-gray-400 font-serif text-xs italic mt-1 max-w-md mx-auto">
-          Nhấp vào bất kỳ ảnh nào để xem kích thước đầy đủ hoặc tùy chỉnh bộ sưu tập ảnh của bạn.
-        </p>
       </div>
 
       {/* Grid Layout of Polaroid Cards */}
