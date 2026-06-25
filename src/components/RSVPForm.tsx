@@ -3,6 +3,61 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Check, ClipboardList, Send, Users, AlertCircle, X } from 'lucide-react';
 import { RSVP, Wish } from '../types';
 
+/**
+ * HƯỚNG DẪN THIẾT LẬP KẾT NỐI GOOGLE SHEETS QUA CODE:
+ * 
+ * 1. Tạo một Google Sheet mới trên Google Drive của bạn.
+ * 2. Vào Tiện ích mở rộng (Extensions) > Apps Script.
+ * 3. Xóa hết code mặc định và dán đoạn mã Apps Script dưới đây vào:
+ * 
+ * ```javascript
+ * function doPost(e) {
+ *   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+ *   if (sheet.getLastRow() === 0) {
+ *     sheet.appendRow(["Thời gian", "Họ tên", "Email", "Tham dự", "Số lượng khách", "Mối quan hệ", "Lời chúc"]);
+ *     sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#d4af37").setFontColor("#0f172a");
+ *   }
+ *   try {
+ *     var params = e.parameter;
+ *     if (e.postData && e.postData.contents) {
+ *       try { params = JSON.parse(e.postData.contents); } catch (e) {}
+ *     }
+ *     var name = params.name || "";
+ *     var email = params.email || "";
+ *     var isAttending = params.isAttending === "true" || params.isAttending === true ? "Có" : "Không";
+ *     var guestsCount = params.guestsCount || "0";
+ *     var relation = params.relation || "";
+ *     var message = params.message || "";
+ *     
+ *     var relationVi = relation;
+ *     if (relation === "family") relationVi = "Gia đình";
+ *     else if (relation === "friend") relationVi = "Bạn bè";
+ *     else if (relation === "teacher") relationVi = "Thầy cô / Đồng nghiệp";
+ *     else if (relation === "other") relationVi = "Khác";
+ * 
+ *     var timestamp = new Date();
+ *     var formattedDate = Utilities.formatDate(timestamp, "GMT+7", "yyyy-MM-dd HH:mm:ss");
+ *     sheet.appendRow([formattedDate, name, email, isAttending, guestsCount, relationVi, message]);
+ *     
+ *     return ContentService.createTextOutput(JSON.stringify({ "status": "success" }))
+ *       .setMimeType(ContentService.MimeType.JSON)
+ *       .setHeader("Access-Control-Allow-Origin", "*");
+ *   } catch (err) {
+ *     return ContentService.createTextOutput(JSON.stringify({ "status": "error", "message": err.toString() }))
+ *       .setMimeType(ContentService.MimeType.JSON)
+ *       .setHeader("Access-Control-Allow-Origin", "*");
+ *   }
+ * }
+ * ```
+ * 
+ * 4. Nhấp vào Triển khai (Deploy) > Tùy chọn triển khai mới (New deployment).
+ * 5. Chọn loại là "Ứng dụng web" (Web app), mục "Người có quyền truy cập" cấu hình chọn "Bất kỳ ai" (Anyone).
+ * 6. Copy URL ứng dụng web nhận được và dán vào biến VITE_RSVP_SHEET_URL trong file `.env` hoặc hằng số `RSVP_SHEET_URL` ở ngay dưới đây!
+ */
+
+// ĐỊNH NGHĨA LINK GOOGLE APPS SCRIPT WEB APP CỦA BẠN TẠI ĐÂY:
+const RSVP_SHEET_URL = import.meta.env.VITE_RSVP_SHEET_URL || "";
+
 interface RSVPFormProps {
   onRsvpSuccess: () => void;
   onNewWishAdded?: (wish: Wish) => void;
@@ -39,8 +94,7 @@ export default function RSVPForm({ onRsvpSuccess, onNewWishAdded }: RSVPFormProp
 
     setIsSubmitting(true);
 
-    // Simulate short network delay for polished UX
-    setTimeout(() => {
+    const submitRsvp = async () => {
       try {
         const newRsvp: RSVP = {
           id: `rsvp_${Date.now()}`,
@@ -81,6 +135,32 @@ export default function RSVPForm({ onRsvpSuccess, onNewWishAdded }: RSVPFormProp
           }
         }
 
+        // 3. Write to Google Sheets (if configured)
+        const activeSheetUrl = RSVP_SHEET_URL;
+        if (activeSheetUrl && activeSheetUrl.trim().startsWith('http')) {
+          try {
+            const formData = new URLSearchParams();
+            formData.append('name', name.trim());
+            formData.append('email', email.trim());
+            formData.append('isAttending', isAttending ? 'true' : 'false');
+            formData.append('guestsCount', isAttending ? guestsCount.toString() : '0');
+            formData.append('relation', relation);
+            formData.append('message', message.trim());
+            formData.append('timestamp', new Date().toISOString());
+
+            await fetch(activeSheetUrl.trim(), {
+              method: 'POST',
+              body: formData,
+              mode: 'no-cors', // Completely resolves browser CORS errors
+              headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              },
+            });
+          } catch (sheetErr) {
+            console.error('Failed to submit RSVP to Google Sheet:', sheetErr);
+          }
+        }
+
         setIsSubmitting(false);
         setIsSubmitted(true);
         onRsvpSuccess();
@@ -89,8 +169,12 @@ export default function RSVPForm({ onRsvpSuccess, onNewWishAdded }: RSVPFormProp
         setErrorMsg('Có lỗi xảy ra khi lưu phản hồi. Vui lòng thử lại.');
         setIsSubmitting(false);
       }
-    }, 1200);
+    };
+
+    // Simulate short network delay for polished UX
+    setTimeout(submitRsvp, 1000);
   };
+
 
   const resetForm = () => {
     setName('');
